@@ -92,28 +92,47 @@ def login(request):
 @api_view(['POST', 'GET'])
 @permission_classes([IsAuthenticated])
 def account_list(request):
-    if request.method == 'POST':
-        # 创建新账户
-        serializer = AccountSerializer(data=request.data)
-        if serializer.is_valid():
-            account = serializer.save()
+    try:
+        # 验证用户信息
+        if not request.user.is_authenticated:
+            return Response({
+                'code': 401,
+                'message': '认证失败',
+                'errors': {
+                    'detail': '用户未登录'
+                }
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        if request.method == 'POST':
+            # 创建新账户
+            serializer = AccountSerializer(data=request.data)
+            if serializer.is_valid():
+                account = serializer.save()
+                return Response({
+                    'code': 200,
+                    'message': '创建账户成功',
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
+            return Response({
+                'code': 400,
+                'message': '参数错误',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        elif request.method == 'GET':
+            # 获取所有账户
+            accounts = Account.objects.all()
+            serializer = AccountSerializer(accounts, many=True)
             return Response({
                 'code': 200,
-                'message': '创建账户成功',
+                'message': '获取账户列表成功',
                 'data': serializer.data
-            }, status=status.HTTP_201_CREATED)
+            })
+    except Exception as e:
         return Response({
-            'code': 400,
-            'message': '参数错误',
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
-    elif request.method == 'GET':
-        # 获取所有账户
-        accounts = Account.objects.all()
-        serializer = AccountSerializer(accounts, many=True)
-        return Response({
-            'code': 200,
-            'message': '获取账户列表成功',
-            'data': serializer.data
-        })
+            'code': 500,
+            'message': '服务器内部错误',
+            'errors': {
+                'detail': str(e)
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

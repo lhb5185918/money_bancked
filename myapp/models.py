@@ -1,16 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
-class User(models.Model):
-    id = models.BigAutoField(primary_key=True, help_text='用户ID')
-    username = models.CharField(max_length=50, unique=True, help_text='用户名')
-    password = models.CharField(max_length=128, help_text='密码')
+class User(AbstractUser):
+    email = models.EmailField(blank=True, null=True, help_text='邮箱')
     nick_name = models.CharField(max_length=50, blank=True, null=True, help_text='昵称')
     description = models.TextField(blank=True, null=True, help_text='描述')
     avatar = models.URLField(max_length=255, blank=True, null=True, help_text='头像URL')
-    email = models.EmailField(max_length=100, blank=True, null=True, help_text='邮箱')
-    created_at = models.DateTimeField(auto_now_add=True, help_text='创建时间')
     
     class Meta:
         db_table = 'user'  # 指定数据库表名
